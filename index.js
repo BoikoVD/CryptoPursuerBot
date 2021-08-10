@@ -1,8 +1,7 @@
-import { TEL_TOKEN, CMC_TOKEN } from 'tokens.js';
+const { TOKENS } = require('./tokens.js');
+
 const TelegramBot = require('node-telegram-bot-api');
-
-const token = TEL_TOKEN;
-
+const token = TOKENS.TEL_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 
 const rp = require('request-promise');
@@ -11,15 +10,17 @@ const requestOptions = {
 	uri: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest',
 	qs: {
 		'start': '1',
-		'limit': '5000',
-		'convert': 'USD'
+		'limit': '1',
+		'convert': 'USD',
+		'percent_change_24h_min': '5',
 	},
 	headers: {
-		'X-CMC_PRO_API_KEY': CMC_TOKEN
+		'X-CMC_PRO_API_KEY': TOKENS.CMC_TOKEN
 	},
 	json: true,
 	gzip: true
 };
+
 
 rp(requestOptions).then(response => {
 	console.log('API call response:', response);
@@ -27,6 +28,7 @@ rp(requestOptions).then(response => {
 	console.log('API call error:', err.message);
 });
 
+
 bot.on('message', (msg) => {
-	console.log("MSGG");
+	console.log('Message = ', msg.text);
 });
