@@ -20,37 +20,51 @@ const requestOptions = {
 	json: true,
 	gzip: true
 };
+
 //===========================================================
+let users = [];
 let pursueringCoins = [
-	"BTC",
-	"ETH",
-	"BNB",
-	"ICP",
-	"SOL",
+	'BTC',
+	'SOL'
 ];
 
-let users = [];
+bot.onText(/\/start/, (msg, match) => {
+	console.log('New user ' + msg.chat.id + ' connected');
+	bot.sendMessage(msg.chat.id, `Hello!
+	Commands usage help:
+	/start to start
+	/beginP to start pursuering
+	/breakP to stop pursuering`);
 
-bot.onText(/\/startP/, (msg, match) => {
+});
+bot.onText(/\/beginP/, (msg, match) => {
 	const chatId = msg.chat.id;
 	users.push(chatId);
 	console.log('user ' + chatId + ' started pursuering');
 	bot.sendMessage(chatId, 'Pursuering started');
 });
-bot.onText(/\/stopP/, (msg, match) => {
+bot.onText(/\/breakP/, (msg, match) => {
 	const chatId = msg.chat.id;
 	let userNum = users.indexOf(chatId);
 	users.splice(userNum, 1);
 	console.log('user ' + chatId + ' stopped pursuering');
 	bot.sendMessage(chatId, 'Pursuering stopped');
 });
-
+/*
+bot.onText(/\/addC/, (msg, match) => {
+	
+});
+bot.onText(/\/delC/, (msg, match) => {
+	
+});
+*/
 let responseCMC;
-setInterval(action, 60000);
+setInterval(action, 30000);
 
 bot.on('message', (msg) => {
 	console.log('Message = ', msg.text);
 });
+
 //FUNCTIONS=============================================================
 async function action() {
 	await getCMCResponse();
