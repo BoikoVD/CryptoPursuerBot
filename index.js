@@ -28,6 +28,11 @@ let pursueringCoins = [
 	'SOL'
 ];
 
+let coinNumbers = [];
+for (let x of pursueringCoins) {
+	coinNumbers.push(0);
+}
+
 bot.onText(/\/start/, (msg, match) => {
 	console.log('New user ' + msg.chat.id + ' connected');
 	bot.sendMessage(msg.chat.id, `Hello!
@@ -35,7 +40,6 @@ bot.onText(/\/start/, (msg, match) => {
 	/start to start
 	/beginP to start pursuering
 	/breakP to stop pursuering`);
-
 });
 bot.onText(/\/beginP/, (msg, match) => {
 	const chatId = msg.chat.id;
@@ -55,11 +59,13 @@ bot.onText(/\/addC/, (msg, match) => {
 	
 });
 bot.onText(/\/delC/, (msg, match) => {
-	
+	86400000
 });
 */
 let responseCMC;
-setInterval(action, 30000);
+setInterval(action, 60000);
+
+setInterval(resetCoinNumbers, 86400000);
 
 bot.on('message', (msg) => {
 	console.log('Message = ', msg.text);
@@ -69,6 +75,13 @@ bot.on('message', (msg) => {
 async function action() {
 	await getCMCResponse();
 	sendAnswer(responseCMC, pursueringCoins);
+}
+
+function resetCoinNumbers() {
+	for (let i = 0; i < pursueringCoins.length; i++) {
+		coinNumbers[i] = 0;
+	};
+	console.log('Numbers reseted');
 }
 
 async function getCMCResponse() {
@@ -83,9 +96,10 @@ function sendAnswer(response, coinsArray, msgId) {
 	if (users.length > 0) {
 		for (let i = 0; i < Object.keys(response).length; i++) {
 			for (let j = 0; j < coinsArray.length; j++) {
-				if (response.data[i].symbol == coinsArray[j]) {
+				if (response.data[i].symbol == coinsArray[j] && coinNumbers[j] == 0) {
 					for (let k = 0; k < users.length; k++) {
 						bot.sendMessage(users[k], 'Coin ' + coinsArray[j] + ' up over than 5%')
+						coinNumbers[j] = 1;
 					}
 				}
 			}
