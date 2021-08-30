@@ -66,20 +66,44 @@ bot.onText(/\/showC/, (msg, match) => {
 	}
 });
 
+bot.onText(/\/setP (.+)/, (msg, match) => {
+	let newPercentValue = +match[1];
+	if (Number.isNaN(newPercentValue)) {
+		bot.sendMessage(msg.chat.id, "Please, enter a number");
+	} else {
+		if (newPercentValue < 0) {
+			bot.sendMessage(msg.chat.id, "Please, enter a positive number");
+		} else {
+			userPercentValues.set(msg.chat.id, newPercentValue);
+			bot.sendMessage(msg.chat.id, "A new percentage value has been set");
+		}
+	}
+});
+bot.onText(/\/showP/, (msg, match) => {
+	let percentValue = userPercentValues.get(msg.chat.id);
+	bot.sendMessage(msg.chat.id, "Set percentage value = " + percentValue + "%");
+});
+
 bot.onText(/\/help/, (msg, match) => {
 	bot.sendMessage(msg.chat.id, `Commands:
+
 	/addC - to add coin symbol to pursuing list. 
 	Example: addC btc
 	/delC - to delete coin symbol from pursuing list. 
 	Example: delC btc
 	/showC - to show all coins added to your pursuing list
+
+	/setP - to set percentage value.
+	Example: setP 10
+	/showP - to show your percentage value
+	
 	/help - to show all commands
 	`);
 });
 //================
 
 bot.on('message', (msg) => {
-	console.log('Message = ', msg.text);
+	console.log('Message(' + msg.chat.id + ') => ', msg.text);
 });
 
 /*
