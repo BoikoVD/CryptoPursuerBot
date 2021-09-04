@@ -12,7 +12,7 @@ const requestOptions = {
 	uri: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest',
 	qs: {
 		'start': '1',
-		'limit': '2',
+		'limit': '20',
 		'convert': 'USD',
 	},
 	headers: {
@@ -23,14 +23,24 @@ const requestOptions = {
 };
 
 //===========================================================
+console.log('Bot started work');
+
 let userCoinLists = new Map();
 let userPercentValues = new Map();
+let coinCounter = new Map();
+let workedUsers = [];
+let responseCMC;
+
+bot.on('message', (msg) => {
+	console.log('Message(' + msg.chat.id + ') => ', msg.text);
+});
 
 //COMMANDS
 bot.onText(/\/start/, (msg, match) => {
 	if (userCoinLists.has(msg.chat.id)) { } else {
 		userCoinLists.set(msg.chat.id, []);
 		userPercentValues.set(msg.chat.id, 5);
+		coinCounter.set(msg.chat.id, []);
 		console.log('New user ' + msg.chat.id + ' connected');
 	}
 	bot.sendMessage(msg.chat.id, "Please use the /help command to learn more about my capabilities");
@@ -84,6 +94,29 @@ bot.onText(/\/showP/, (msg, match) => {
 	bot.sendMessage(msg.chat.id, "Set percentage value = " + percentValue + "%");
 });
 
+bot.onText(/\/beginP/, (msg, match) => {
+	const chatId = msg.chat.id;
+	if (userCoinLists.get(chatId).length == 0) {
+		bot.sendMessage(chatId, 'You have not added any coins. Please, add a coin symbol to your pursuing list using the command /addC')
+	} else {
+		workedUsers.push(chatId);
+		for (let countList of coinCounter.values()) {
+			for (let i = 0; i < userCoinLists.get(chatId).length; i++) {
+				countList[i] = false;
+			};
+		}
+		console.log('user ' + chatId + ' started pursuering');
+		bot.sendMessage(chatId, 'Pursuering started');
+	}
+});
+bot.onText(/\/breakP/, (msg, match) => {
+	const chatId = msg.chat.id;
+	let userNum = workedUsers.indexOf(chatId);
+	workedUsers.splice(userNum, 1);
+	console.log('user ' + chatId + ' stopped pursuering');
+	bot.sendMessage(chatId, 'Pursuering stopped');
+});
+
 bot.onText(/\/help/, (msg, match) => {
 	bot.sendMessage(msg.chat.id, `Commands:
 
@@ -96,91 +129,30 @@ bot.onText(/\/help/, (msg, match) => {
 	/setP - to set percentage value.
 	Example: setP 10
 	/showP - to show your percentage value
-	
+
+	/beginP - to start pursuing
+	/breakP - to stop pursuing
+
 	/help - to show all commands
 	`);
 });
-//================
 
-bot.on('message', (msg) => {
-	console.log('Message(' + msg.chat.id + ') => ', msg.text);
-});
-
-/*
-rp(requestOptions).then(response => {
-	for (let i = 0; i < Object.keys(response).length; i++) {
-		console.log(response.data[i].symbol);
-		console.log(response.data[i].quote.USD.percent_change_7d);
+//MainActions
+setInterval(check, 60000);
+setInterval(() => {
+	for (let countList of coinCounter.values()) {
+		for (let i = 0; i < countList.length; i++) {
+			countList[i] = false;
+		};
 	}
-}).catch((err) => {
-	console.log('API call error:', err.message);
-});
-*/
+	console.log('Counter reseted');
+}, 86400000);
 
-//===========================================================
-/*
-let users = [];
-let pursueringCoins = [
-	'BTC',
-	'SOL'
-];
-
-let coinNumbers = [];
-for (let x of pursueringCoins) {
-	coinNumbers.push(0);
-}
-
-bot.onText(/\/start/, (msg, match) => {
-	console.log('New user ' + msg.chat.id + ' connected');
-	bot.sendMessage(msg.chat.id, `Hello!
-	Commands usage help:
-	/start to start
-	/beginP to start pursuering
-	/breakP to stop pursuering`);
-});
-bot.onText(/\/beginP/, (msg, match) => {
-	const chatId = msg.chat.id;
-	users.push(chatId);
-	console.log('user ' + chatId + ' started pursuering' + match);
-	bot.sendMessage(chatId, 'Pursuering started');
-});
-bot.onText(/\/breakP/, (msg, match) => {
-	const chatId = msg.chat.id;
-	let userNum = users.indexOf(chatId);
-	users.splice(userNum, 1);
-	console.log('user ' + chatId + ' stopped pursuering');
-	bot.sendMessage(chatId, 'Pursuering stopped');
-});
-
-bot.onText(/\/addC/, (msg, match) => {
-
-});
-bot.onText(/\/delC/, (msg, match) => {
-
-});
-
-let responseCMC;
-setInterval(action, 60000);
-
-setInterval(resetCoinNumbers, 86400000);
-
-bot.on('message', (msg) => {
-	console.log('Message = ', msg.text);
-});
-
-//FUNCTIONS=============================================================
-async function action() {
+//FUNCTIONS
+async function check() {
 	await getCMCResponse();
-	sendAnswer(responseCMC, pursueringCoins);
+	sendAnswer(responseCMC, workedUsers);
 }
-
-function resetCoinNumbers() {
-	for (let i = 0; i < pursueringCoins.length; i++) {
-		coinNumbers[i] = 0;
-	};
-	console.log('Numbers reseted');
-}
-
 async function getCMCResponse() {
 	await rp(requestOptions).then(response => {
 		responseCMC = response;
@@ -188,19 +160,26 @@ async function getCMCResponse() {
 		console.log('API call error:', err.message);
 	});
 }
-
-function sendAnswer(response, coinsArray, msgId) {
-	if (users.length > 0) {
-		for (let i = 0; i < Object.keys(response).length; i++) {
-			for (let j = 0; j < coinsArray.length; j++) {
-				if (response.data[i].symbol == coinsArray[j] && coinNumbers[j] == 0) {
-					for (let k = 0; k < users.length; k++) {
-						bot.sendMessage(users[k], 'Coin ' + coinsArray[j] + ' up over than 5%')
-						coinNumbers[j] = 1;
+function sendAnswer(response, workedUsers) {
+	for (let wUser of workedUsers) {
+		for (let user of userCoinLists) {
+			let userId = user[0];
+			if (wUser == userId) {
+				let coinList = user[1];
+				let counterCoin = coinCounter.get(userId);
+				let userPercent = userPercentValues.get(userId);
+				for (let i = 0; i < Object.keys(response.data).length; i++) {
+					for (let j = 0; j < coinList.length; j++) {
+						if (coinList[j] == response.data[i].symbol &&
+							userPercent <= response.data[i].quote.USD.percent_change_24h &&
+							counterCoin[j] == false
+						) {
+							bot.sendMessage(userId, 'Coin \'' + coinList[j] + '\' up over than ' + userPercent + '%');
+							counterCoin[j] = true;
+						}
 					}
 				}
 			}
 		}
 	}
 }
-*/
