@@ -1,15 +1,7 @@
-# My CryptoPursuer telegram bot.
+# CryptoPursuer telegram bot.
 
-## Version 1.
+## Link: @crypto_pursuer_bot
 
-#### Bot send every 60 sec messages with coins name which grew up on 5%.
-#### You can choose coins which want to pursuering, adding their symbol to array "pursueringCoins". Example:
+## Version 2.
 
-let pursueringCoins = [
-	"BTC",
-	"ETH",
-	"BNB",
-	"ICP",
-	"SOL",
-];
-
+#### This bot can send messages when your coins will grow up to the percentage which you have set.

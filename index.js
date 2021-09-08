@@ -72,7 +72,8 @@ bot.onText(/\/showC/, (msg, match) => {
 	if (coinList.length == 0) {
 		bot.sendMessage(msg.chat.id, "You haven't added any coins");
 	} else {
-		bot.sendMessage(msg.chat.id, JSON.stringify(coinList, null, 2));
+		//bot.sendMessage(msg.chat.id, JSON.stringify(coinList, null, 2));
+		bot.sendMessage(msg.chat.id, toStringCoinList(coinList));
 	}
 });
 
@@ -138,7 +139,7 @@ bot.onText(/\/help/, (msg, match) => {
 });
 
 //MainActions
-setInterval(check, 60000);
+setInterval(check, 3600000);
 setInterval(() => {
 	for (let countList of coinCounter.values()) {
 		for (let i = 0; i < countList.length; i++) {
@@ -182,4 +183,15 @@ function sendAnswer(response, workedUsers) {
 			}
 		}
 	}
+}
+function toStringCoinList(coinList) {
+	let str = 'You are pursuing:\n';
+	for (let i = 0; i <= coinList.length - 1; i++) {
+		if (i == coinList.length - 1) {
+			str += coinList[i];
+		} else {
+			str += coinList[i] + ', ';
+		}
+	}
+	return str;
 }
