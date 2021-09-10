@@ -23,7 +23,7 @@ const requestOptions = {
 };
 
 //===========================================================
-console.log('Bot started work');
+console.log('Bot has been started.');
 
 let userCoinLists = new Map();
 let userPercentValues = new Map();
