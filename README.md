@@ -8,6 +8,7 @@ This bot can send messages when your coins will grow up to the percentage which 
 ## How to start
 
 You need to insert your API keys in the appropriate fields of the file tokens.js to work properly.
+![Photo](/assets/images/Capture..JPG)
 
 In the project directory, you can run:
 #### `node index`
