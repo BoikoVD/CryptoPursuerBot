@@ -12,4 +12,4 @@ You need to insert your API keys in the appropriate fields of the file tokens.js
 In the project directory, you can run:
 #### `node index`
 
-Then open the telegram chat and press `/start`.
+Then open the telegram chat whose API key you entered in the file tokens.js and press `/ start`.
