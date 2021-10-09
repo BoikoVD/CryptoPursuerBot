@@ -1,0 +1,7 @@
+const TEL_TOKEN = '1903976606:AAGQiWb7YhemQkw3JR_IjapCsPbT2q0m1q0';
+const CMC_TOKEN = '55f8bf7b-0d83-4498-8c43-aaf1c2c05c56';
+const TOKENS = {
+	TEL_TOKEN: TEL_TOKEN,
+	CMC_TOKEN: CMC_TOKEN,
+}
+module.exports.TOKENS = TOKENS;

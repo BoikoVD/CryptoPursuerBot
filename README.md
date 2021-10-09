@@ -14,4 +14,8 @@ You need to insert your Telegram and CoinMarketCap API keys in the appropriate f
 In the project directory, you can run:
 #### `node index`
 
+<<<<<<< HEAD
 Then open the telegram chat whose API key you entered in the file `tokens.js` and press `/start`.
+=======
+Then open the telegram chat whose API key you entered in the file `tokens.js` and press `/start`.
+>>>>>>> 1c1bc9938b0bb93e6c48684f06a059de96b7a3af
