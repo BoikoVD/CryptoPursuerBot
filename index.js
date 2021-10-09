@@ -22,7 +22,6 @@ const requestOptions = {
 	gzip: true
 };
 
-//===========================================================
 console.log('Bot has been started.');
 
 let userCoinLists = new Map();
