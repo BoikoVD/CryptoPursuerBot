@@ -139,7 +139,7 @@ bot.onText(/\/help/, (msg, match) => {
 });
 
 //MainActions
-setInterval(check, 3600000);
+setInterval(check, 10800000);
 setInterval(() => {
 	for (let countList of coinCounter.values()) {
 		for (let i = 0; i < countList.length; i++) {
