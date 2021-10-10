@@ -120,13 +120,13 @@ bot.onText(/\/breakP/, (msg, match) => {
 bot.onText(/\/help/, (msg, match) => {
 	bot.sendMessage(msg.chat.id, `Commands:
 
-	/addC - to add coin symbol to pursuing list. 
+	/addC {coin symbol} - to add coin symbol to pursuing list. 
 	Example: addC btc
-	/delC - to delete coin symbol from pursuing list. 
+	/delC {coin symbol} - to delete coin symbol from pursuing list. 
 	Example: delC btc
 	/showC - to show all coins added to your pursuing list
 
-	/setP - to set percentage value.
+	/setP {percentage value} - to set percentage value.
 	Example: setP 10
 	/showP - to show your percentage value
 
