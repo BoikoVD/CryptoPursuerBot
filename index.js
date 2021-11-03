@@ -1,5 +1,3 @@
-'use strict';
-
 const { TOKENS } = require('./tokens.js');
 
 const TelegramBot = require('node-telegram-bot-api');
@@ -22,98 +20,93 @@ const requestOptions = {
 	gzip: true
 };
 
-console.log('Bot has been started.');
 
-let userCoinLists = new Map();
-let userPercentValues = new Map();
-let coinCounter = new Map();
-let workedUsers = [];
-let responseCMC;
+let users = new Map();
+let sendNotificationInterval = 10800000;
+let resetNotificationInterval = 86400000;
 
 bot.on('message', (msg) => {
-	console.log('Message(' + msg.chat.id + ') => ', msg.text);
+	console.log('Msg(' + msg.chat.id + ') => ', msg.text);
 });
 
-//COMMANDS
+
 bot.onText(/\/start/, (msg, match) => {
-	if (userCoinLists.has(msg.chat.id)) { } else {
-		userCoinLists.set(msg.chat.id, []);
-		userPercentValues.set(msg.chat.id, 5);
-		coinCounter.set(msg.chat.id, []);
-		console.log('New user ' + msg.chat.id + ' connected');
+	let chatId = msg.chat.id;
+	if (!users.has(chatId)) {
+		users.set(chatId, new Map([
+			['coins', []],
+			['percentValue', 5],
+			['isWorking', false]
+		]));
 	}
-	bot.sendMessage(msg.chat.id, "Please use the /help command to learn more about my capabilities");
+	bot.sendMessage(chatId, "Please use the /help command to learn more about my capabilities");
 });
 
 bot.onText(/\/addC (.+)/, (msg, match) => {
-	let coin = match[1].toUpperCase();
-	let coinList = userCoinLists.get(msg.chat.id);
-	if (coinList.includes(coin)) {
-		bot.sendMessage(msg.chat.id, "You have added this coin");
+	let chatId = msg.chat.id;
+	let enteredCoin = match[1].toUpperCase();
+	let userCoins = users.get(chatId).get('coins');
+	if (checkTheSameCoins(enteredCoin, userCoins)) {
+		bot.sendMessage(chatId, "You have added this coin");
 	} else {
-		coinList.push(coin);
-		bot.sendMessage(msg.chat.id, coin + " added");
+		userCoins.push({ coinSymbol: enteredCoin, notified: false });
+		bot.sendMessage(chatId, enteredCoin + " added");
 	}
 });
 bot.onText(/\/delC (.+)/, (msg, match) => {
-	let coin = match[1].toUpperCase();
-	let coinList = userCoinLists.get(msg.chat.id);
-	if (coinList.includes(coin)) {
-		let index = coinList.indexOf(coin);
-		coinList.splice(index, 1);
-		bot.sendMessage(msg.chat.id, coin + " deleted");
+	let chatId = msg.chat.id;
+	let enteredCoin = match[1].toUpperCase();
+	let userCoins = users.get(chatId).get('coins');
+	if (checkTheSameCoins(enteredCoin, userCoins)) {
+		let index = userCoins.indexOf(enteredCoin);
+		userCoins.splice(index, 1);
+		bot.sendMessage(chatId, enteredCoin + " deleted");
 	} else {
-		bot.sendMessage(msg.chat.id, "You haven't added this coin");
+		bot.sendMessage(chatId, "You haven't added this coin");
 	}
 });
 bot.onText(/\/showC/, (msg, match) => {
-	let coinList = userCoinLists.get(msg.chat.id);
-	if (coinList.length == 0) {
-		bot.sendMessage(msg.chat.id, "You haven't added any coins");
+	let chatId = msg.chat.id;
+	let userCoins = users.get(chatId).get('coins');
+	if (userCoins.length === 0) {
+		bot.sendMessage(chatId, "You haven't added any coins");
 	} else {
-		//bot.sendMessage(msg.chat.id, JSON.stringify(coinList, null, 2));
-		bot.sendMessage(msg.chat.id, toStringCoinList(coinList));
+		bot.sendMessage(chatId, toStringCoinList(userCoins));
 	}
 });
 
 bot.onText(/\/setP (.+)/, (msg, match) => {
+	let chatId = msg.chat.id;
 	let newPercentValue = +match[1];
 	if (Number.isNaN(newPercentValue)) {
-		bot.sendMessage(msg.chat.id, "Please, enter a number");
+		bot.sendMessage(chatId, "Please, enter a number");
 	} else {
 		if (newPercentValue < 0) {
-			bot.sendMessage(msg.chat.id, "Please, enter a positive number");
+			bot.sendMessage(chatId, "Please, enter a positive number");
 		} else {
-			userPercentValues.set(msg.chat.id, newPercentValue);
-			bot.sendMessage(msg.chat.id, "A new percentage value has been set");
+			users.get(chatId).set('percentValue', newPercentValue);
+			bot.sendMessage(chatId, "A new percentage value has been set");
 		}
 	}
 });
 bot.onText(/\/showP/, (msg, match) => {
-	let percentValue = userPercentValues.get(msg.chat.id);
-	bot.sendMessage(msg.chat.id, "Set percentage value = " + percentValue + "%");
+	let chatId = msg.chat.id;
+	let percentValue = users.get(chatId).get('percentValue');
+	bot.sendMessage(chatId, "Set percentage value = " + percentValue + "%");
 });
 
 bot.onText(/\/beginP/, (msg, match) => {
 	const chatId = msg.chat.id;
-	if (userCoinLists.get(chatId).length == 0) {
+	if (users.get(chatId).get('coins').length === 0) {
 		bot.sendMessage(chatId, 'You have not added any coins. Please, add a coin symbol to your pursuing list using the command /addC')
 	} else {
-		workedUsers.push(chatId);
-		for (let countList of coinCounter.values()) {
-			for (let i = 0; i < userCoinLists.get(chatId).length; i++) {
-				countList[i] = false;
-			};
-		}
-		console.log('user ' + chatId + ' started pursuering');
+		users.get(chatId).set('isWorking', true);
 		bot.sendMessage(chatId, 'Pursuering started');
 	}
 });
 bot.onText(/\/breakP/, (msg, match) => {
 	const chatId = msg.chat.id;
-	let userNum = workedUsers.indexOf(chatId);
-	workedUsers.splice(userNum, 1);
-	console.log('user ' + chatId + ' stopped pursuering');
+	users.get(chatId).set('isWorking', false);
 	bot.sendMessage(chatId, 'Pursuering stopped');
 });
 
@@ -137,60 +130,63 @@ bot.onText(/\/help/, (msg, match) => {
 	`);
 });
 
-//MainActions
-setInterval(check, 10800000);
-setInterval(() => {
-	for (let countList of coinCounter.values()) {
-		for (let i = 0; i < countList.length; i++) {
-			countList[i] = false;
-		};
-	}
-	console.log('Counter reseted');
-}, 86400000);
 
-//FUNCTIONS
-async function check() {
-	await getCMCResponse();
-	sendAnswer(responseCMC, workedUsers);
-}
-async function getCMCResponse() {
-	await rp(requestOptions).then(response => {
-		responseCMC = response;
-	}).catch((err) => {
-		console.log('API call error:', err.message);
-	});
-}
-function sendAnswer(response, workedUsers) {
-	for (let wUser of workedUsers) {
-		for (let user of userCoinLists) {
-			let userId = user[0];
-			if (wUser == userId) {
-				let coinList = user[1];
-				let counterCoin = coinCounter.get(userId);
-				let userPercent = userPercentValues.get(userId);
-				for (let i = 0; i < Object.keys(response.data).length; i++) {
-					for (let j = 0; j < coinList.length; j++) {
-						if (coinList[j] == response.data[i].symbol &&
-							userPercent <= response.data[i].quote.USD.percent_change_24h &&
-							counterCoin[j] == false
-						) {
-							bot.sendMessage(userId, 'Coin \'' + coinList[j] + '\' up over than ' + userPercent + '%');
-							counterCoin[j] = true;
-						}
-					}
-				}
-			}
+setInterval(() => { sendNotifications() }, sendNotificationInterval);
+setInterval(() => { resetNotification(users) }, resetNotificationInterval);
+
+
+function checkTheSameCoins(enteredCoin, coinList) {
+	for (let coin of coinList) {
+		if (coin.coinSymbol === enteredCoin) {
+			return true;
 		}
 	}
+	return false;
 }
 function toStringCoinList(coinList) {
 	let str = 'You are pursuing:\n';
 	for (let i = 0; i <= coinList.length - 1; i++) {
 		if (i == coinList.length - 1) {
-			str += coinList[i];
+			str += coinList[i].coinSymbol;
 		} else {
-			str += coinList[i] + ', ';
+			str += coinList[i].coinSymbol + ', ';
 		}
 	}
 	return str;
+}
+function resetNotification(users) {
+	for (let user of users.values()) {
+		for (let coin of user.get('coins')) {
+			coin.notified = false;
+		}
+	}
+}
+async function sendNotifications() {
+	await rp(requestOptions).then(response => {
+		sendMessages(response, users)
+	}).catch((err) => {
+		console.log('API call error:', err.message);
+	});
+}
+function sendMessages(response, users) {
+	for (let user of users) {
+		let userId = user[0];
+		let userData = user[1];
+		let userPercent = userData.get('percentValue');
+
+		if (userData.get('isWorking')) {
+			for (let data of response.data) {
+				for (let coin of userData.get('coins')) {
+					if (coin.coinSymbol === data.symbol &&
+						userPercent <= data.quote.USD.percent_change_24h &&
+						coin.notified === false
+					) {
+						bot.sendMessage(userId, 'Coin ' + coin.coinSymbol + ' up over than ' + userPercent + '%');
+						coin.notified = true;
+					}
+				}
+			}
+		}
+
+	}
 }
